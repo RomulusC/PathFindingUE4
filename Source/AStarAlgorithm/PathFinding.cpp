@@ -26,7 +26,7 @@ void APathFinding::BeginPlay()
 	this->m_currentNode->lCost = 0.0f;
 
 
-	this->m_currentNode->gCost = m_currentNode->GetDistanceTo(m_endNode);
+	this->m_currentNode->gCost = m_currentNode->GetSquaredDistanceTo(m_endNode);
 
 
 
@@ -39,12 +39,17 @@ void APathFinding::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 	if (!finishedPathfinding)
 	{
+		
 		SpawnNodes();
 		Algorithm();
 	}
 	else if (!finishedPathShown&&finishedPathfinding)
 	{
-		//show path
+		while (m_pathList.Last()!=m_startNode)
+		{
+			
+			m_pathList.Push(m_pathList.Last()->ParentNode);
+		}		
 		finishedPathShown = true;
 	}
 
@@ -101,13 +106,13 @@ void APathFinding::Algorithm()
 {
 	for (int i = 0; i < m_currentNode->ArrayNeighbours.Num(); i++)
 	{
-		float D = m_currentNode->GetDistanceTo(m_currentNode->ArrayNeighbours[i]);
+		float D = m_currentNode->GetSquaredDistanceTo(m_currentNode->ArrayNeighbours[i]);
 
 		if ((m_currentNode->lCost + D) < m_currentNode->ArrayNeighbours[i]->lCost)
 		{
 			m_currentNode->ArrayNeighbours[i]->ParentNode = m_currentNode;
 			m_currentNode->ArrayNeighbours[i]->lCost = m_currentNode->lCost + D;
-			m_currentNode->ArrayNeighbours[i]->gCost = m_currentNode->ArrayNeighbours[i]->GetDistanceTo(m_endNode);
+			m_currentNode->ArrayNeighbours[i]->gCost = m_currentNode->ArrayNeighbours[i]->GetSquaredDistanceTo(m_endNode);
 
 			m_listPriorityNodes.Push(m_currentNode->ArrayNeighbours[i]);
 		}
