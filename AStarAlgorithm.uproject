@@ -1,6 +1,6 @@
 {
 	"FileVersion": 3,
-	"EngineAssociation": "4.21",
+	"EngineAssociation": "4.20",
 	"Category": "",
 	"Description": "",
 	"Enterprise": true,
@@ -8,7 +8,10 @@
 		{
 			"Name": "AStarAlgorithm",
 			"Type": "Runtime",
-			"LoadingPhase": "Default"
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [
+				"Engine"
+			]
 		}
 	]
 }
