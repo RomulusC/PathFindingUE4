@@ -1,12 +1,14 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
-
+#include "Collision.h"
+#include "Engine/CollisionProfile.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/BoxComponent.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "AStarNode.generated.h"
+
 
 
 UCLASS()
@@ -18,12 +20,14 @@ public:
 	// Sets default values for this actor's properties
 	AAStarNode();
 
+
 	USceneComponent* Scene;
 
-	UPROPERTY(EditAnywhere)
+	bool b_VisualNodes = false;
+
 		UStaticMeshComponent* Mesh;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(VisibleAnywhere)
 		UBoxComponent* BoxCollision;
 
 	AAStarNode* ParentNode;
@@ -33,6 +37,12 @@ public:
 		float lCost = INFINITY;
 	UPROPERTY(VisibleAnywhere)
 		float gCost = INFINITY;
+	UPROPERTY(VisibleAnywhere)
+		float fCost = INFINITY;
+
+	bool isVisited = false;
+	
+	
 
 
 
@@ -43,6 +53,7 @@ protected:
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-
-
+	
+private:
+	
 };

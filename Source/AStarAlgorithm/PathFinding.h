@@ -32,7 +32,7 @@ public:
 
 private:
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(VisibleAnywhere)
 		float m_nodeVolume;
 	float m_nodeDistBetween;
 	UPROPERTY(EditAnywhere)
@@ -46,6 +46,7 @@ private:
 	bool finishedPathfinding = false;
 	bool finishedPathShown = false;
 	void Algorithm();
+	
 
 
 
@@ -85,7 +86,7 @@ private:
 			{
 
 				position_distance[i].s_position = FVector((_nodePosition.X + p_constants[i].X), _nodePosition.Y + p_constants[i].Y, _nodePosition.Z + p_constants[i].Z);
-				//position_distance[i].m_D = m_currentNode->GetDistanceTo(m_endNode);
+				
 
 
 			}

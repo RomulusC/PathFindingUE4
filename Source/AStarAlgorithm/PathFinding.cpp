@@ -12,22 +12,28 @@ APathFinding::APathFinding()
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	m_nodeVolume = 64.0f;
-	m_nodeDistBetween = m_nodeVolume + 0.01f;
+	
 }
 
 // Called when the game starts or when spawned
 void APathFinding::BeginPlay()
 {
 	Super::BeginPlay();
+	
+	m_nodeVolume = m_startNode->BoxCollision->GetScaledBoxExtent().X;
+	m_nodeVolume = (m_nodeVolume*2) + .001f;
+	
+
 	this->m_listPriorityNodes.Push(this->m_startNode);
 	this->m_pathList.Push(this->m_endNode);
 	this->m_currentNode = this->m_startNode;
 	this->m_currentNode->lCost = 0.0f;
-
-
 	this->m_currentNode->gCost = m_currentNode->GetSquaredDistanceTo(m_endNode);
+	this->m_currentNode->fCost = this->m_currentNode->gCost + this->m_currentNode->lCost;
 
+	m_endNode->gCost = 0;
+
+	
 
 
 }
@@ -58,7 +64,7 @@ void APathFinding::Tick(float DeltaTime)
 void  APathFinding::SpawnNodes()
 {//SNPAWNS AND CHECKS NEIGHBOURS INTO LIST
 
-	PositionOffset PositionTest(m_currentNode->GetActorLocation(), m_endNode->GetActorLocation(), m_nodeDistBetween);
+	PositionOffset PositionTest(m_currentNode->GetActorLocation(), m_endNode->GetActorLocation(), m_nodeVolume);
 
 
 	UWorld* world = GetWorld();
@@ -77,7 +83,7 @@ void  APathFinding::SpawnNodes()
 
 		if (spawnedActor != nullptr)
 		{
-			m_currentNode->ArrayNeighbours.Push(spawnedActor);
+			m_currentNode->ArrayNeighbours.AddUnique(spawnedActor);
 		}
 		else
 		{
@@ -92,7 +98,7 @@ void  APathFinding::SpawnNodes()
 				for (int i = 0; i < OverlappingActors.Num(); i++)
 				{//maybe check for collision with area > some value
 
-					m_currentNode->ArrayNeighbours.Push(StaticCast<AAStarNode*>(OverlappingActors[i]));
+					m_currentNode->ArrayNeighbours.AddUnique(StaticCast<AAStarNode*>(OverlappingActors[i]));
 
 				}
 			}
@@ -100,27 +106,28 @@ void  APathFinding::SpawnNodes()
 		}
 	}
 
-}
+}	
 
 void APathFinding::Algorithm()
 {
+	
 	for (int i = 0; i < m_currentNode->ArrayNeighbours.Num(); i++)
 	{
 		float D = m_currentNode->GetSquaredDistanceTo(m_currentNode->ArrayNeighbours[i]);
 
-		if ((m_currentNode->lCost + D) < m_currentNode->ArrayNeighbours[i]->lCost)
+		if (m_currentNode->isVisited==false && (m_currentNode->lCost + D) < m_currentNode->ArrayNeighbours[i]->lCost)
 		{
 			m_currentNode->ArrayNeighbours[i]->ParentNode = m_currentNode;
 			m_currentNode->ArrayNeighbours[i]->lCost = m_currentNode->lCost + D;
 			m_currentNode->ArrayNeighbours[i]->gCost = m_currentNode->ArrayNeighbours[i]->GetSquaredDistanceTo(m_endNode);
-
+			m_currentNode->ArrayNeighbours[i]->fCost = m_currentNode->ArrayNeighbours[i]->lCost + m_currentNode->ArrayNeighbours[i]->gCost;
 			m_listPriorityNodes.Push(m_currentNode->ArrayNeighbours[i]);
 		}
 	}
-
+	this->m_currentNode->isVisited = true;
 	m_listPriorityNodes.Remove(m_currentNode);
 
-	m_listPriorityNodes.Sort([](AAStarNode& a, AAStarNode& b) {return a.gCost < b.gCost; });
+	m_listPriorityNodes.Sort([](AAStarNode& a, AAStarNode& b) {return a.fCost < b.fCost; });
 
 	if (m_listPriorityNodes[0] == m_endNode)
 	{
@@ -134,6 +141,32 @@ void APathFinding::Algorithm()
 
 void APathFinding::PositionOffset::AssignConstants(float _nodeSpacing)
 {
+
+
+	//p_constants[0] = FVector(-_nodeSpacing, 0.0f, 0.0f);
+	//p_constants[1] = FVector(_nodeSpacing, 0.0f, 0.0f);
+	//p_constants[2] = FVector(0.0f, -_nodeSpacing, 0.0f);
+	//p_constants[3] = FVector(0.0f, _nodeSpacing, 0.0f);
+	////p_constants[4] = FVector(0.0f, 0.0f, 0.0f);
+	//p_constants[4] = FVector(0.0f, 0.0f, _nodeSpacing);
+	//p_constants[5] = FVector(0.0f, 0.0f, -_nodeSpacing);
+
+	////p_constants[6] = FVector(0.0f, -_nodeSpacing, 0.0f);
+	////p_constants[7] = FVector(_nodeSpacing, -_nodeSpacing, 0.0f);
+
+	////p_constants[8] = FVector(0.0f, _nodeSpacing,-_nodeSpacing);
+	////p_constants[9] = FVector(0.0f, _nodeSpacing, _nodeSpacing);
+	////p_constants[10] = FVector(0.0f, 0.0f, -_nodeSpacing);
+	////p_constants[11] = FVector(0.0f, 0.0f,  _nodeSpacing);
+	//////p_constants[4] = FVector(0.0f, 0.0f, 0.0f);
+	////p_constants[12] = FVector(0.0f, -_nodeSpacing, -_nodeSpacing);
+	////p_constants[13] = FVector(0.0f, -_nodeSpacing, _nodeSpacing);
+	
+	
+
+	p_constants.SetNum(26);
+
+
 	p_constants[0] = FVector(-_nodeSpacing, _nodeSpacing, -_nodeSpacing);
 	p_constants[1] = FVector(0.0f, _nodeSpacing, -_nodeSpacing);
 	p_constants[2] = FVector(_nodeSpacing, _nodeSpacing, -_nodeSpacing);
