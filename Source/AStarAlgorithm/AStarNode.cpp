@@ -18,20 +18,21 @@ AAStarNode::AAStarNode()
 	//MeshComponent->SetupAttachment(RootComponent);
 
 	BoxComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("BoxComponent"));
-	
+
 	BoxComponent->SetCollisionProfileName(FName("NodePreset"));
+	BoxComponent->bMultiBodyOverlap = true;
 	//BoxComponent->CanEverAffectNavigation(false);
 	BoxComponent->SetUseCCD(true);
 	BoxComponent->SetupAttachment(GetRootComponent());
 
-	
+
 }
 
 // Called when the game starts or when spawned
 void AAStarNode::BeginPlay()
-{	
-	Super::BeginPlay();	
-	
+{
+	Super::BeginPlay();
+
 }
 
 // Called every frame
@@ -39,9 +40,8 @@ void AAStarNode::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	if (bNodeDrawExtent)
-	{		
-		DrawDebugBox(GetWorld(), this->GetActorLocation(), this->GetComponentsBoundingBox().GetExtent(), FColor::Green, true, 5);		
+	{
+		DrawDebugBox(GetWorld(), this->GetActorLocation(), this->GetComponentsBoundingBox().GetExtent(), FColor::Green, true, 5);
 	}
 }
-
 
