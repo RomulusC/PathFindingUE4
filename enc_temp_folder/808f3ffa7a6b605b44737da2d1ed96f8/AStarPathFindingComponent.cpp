@@ -43,7 +43,7 @@ void UAStarPathFindingComponent::BeginPlay()
 
 		SpawnedMeshComponent->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Overlap);
 
-		ANodePriority.HeapPush(SpawnedNode, SortingPredicate);
+		ANodePriority.HeapPush(SpawnedNode, [](AAStarNode& a, AAStarNode& b) {return a.fCost < b.fCost; });
 
 		SpawnedNode = nullptr;
 		spawnLocation = AEndActor->GetActorLocation();
@@ -101,7 +101,7 @@ void UAStarPathFindingComponent::TickComponent(float DeltaTime, ELevelTick TickT
 void  UAStarPathFindingComponent::Algorithm()
 {
 	AAStarNode* CurrentNode = nullptr;
-	ANodePriority.HeapPop(CurrentNode, SortingPredicate);
+	ANodePriority.HeapPop(CurrentNode, [](AAStarNode& a, AAStarNode& b) {return a.fCost < b.fCost; });
 
 	for (int i = 0; i < CurrentNode->ArrayNeighbours.Num(); i++)
 	{
@@ -114,7 +114,7 @@ void  UAStarPathFindingComponent::Algorithm()
 			CurrentNode->ArrayNeighbours[i]->gCost = CurrentNode->ArrayNeighbours[i]->GetSquaredDistanceTo(ANodePathList.GetHead()->GetValue());
 			CurrentNode->ArrayNeighbours[i]->fCost = CurrentNode->ArrayNeighbours[i]->lCost + CurrentNode->ArrayNeighbours[i]->gCost;
 
-			ANodePriority.HeapPush(CurrentNode->ArrayNeighbours[i], SortingPredicate);
+			ANodePriority.HeapPush(CurrentNode->ArrayNeighbours[i], [](AAStarNode& a, AAStarNode& b) {return a.fCost < b.fCost; });
 		}
 	}
 }

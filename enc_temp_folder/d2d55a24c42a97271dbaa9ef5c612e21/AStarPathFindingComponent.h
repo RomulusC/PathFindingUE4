@@ -35,8 +35,6 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	
 private:
-	//Predicate Lambda: Sorts Heap structure of Nodes by smallest fCost first
-	TFunction<bool(const AAStarNode& a, AAStarNode& b)> SortingPredicate = [&](const AAStarNode& a, AAStarNode& b) {return a.fCost < b.fCost;};	
 
 	//Methods
 	void Algorithm();
@@ -81,4 +79,5 @@ private:
 	};
 
 	FSuccessorPositions SuccessorPositions;
+	
 };
