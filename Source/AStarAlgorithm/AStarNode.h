@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// Rommulluss Caraiman 
 
 #pragma once
 #include "Collision.h"
@@ -9,26 +9,22 @@
 #include "GameFramework/Actor.h"
 #include "AStarNode.generated.h"
 
-
-
 UCLASS()
 class ASTARALGORITHM_API AAStarNode : public AActor
 {
 	GENERATED_BODY()
 
+private:
+	USceneComponent* SceneComponent;
+
 public:
 	// Sets default values for this actor's properties
 	AAStarNode();
 
-
-	USceneComponent* Scene;
-
-	bool b_VisualNodes = false;
-
-		UStaticMeshComponent* Mesh;
+	bool bNodeDrawExtent = false;
 
 	UPROPERTY(VisibleAnywhere)
-		UBoxComponent* BoxCollision;
+		UBoxComponent* BoxComponent;
 
 	AAStarNode* ParentNode;
 	TArray<AAStarNode*> ArrayNeighbours;
@@ -40,11 +36,7 @@ public:
 	UPROPERTY(VisibleAnywhere)
 		float fCost = INFINITY;
 
-	bool isVisited = false;
-	
-	
-
-
+	bool IsNodeVisited = false;
 
 protected:
 	// Called when the game starts or when spawned
@@ -52,8 +44,5 @@ protected:
 
 public:
 	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-	
-private:
-	
+	virtual void Tick(float DeltaTime) override;	
 };

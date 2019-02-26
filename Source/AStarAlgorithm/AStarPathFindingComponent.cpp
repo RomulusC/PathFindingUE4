@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// Rommulluss Caraiman 
 
 #include "AStarPathFindingComponent.h"
 #include "Runtime/Engine/Classes/Engine/World.h"
@@ -16,51 +16,55 @@ void UAStarPathFindingComponent::BeginPlay()
 {
 	Super::BeginPlay();	
 	
-	if (m_EndActor != nullptr)
-	{
-		
-		if (m_sizeOfNodeBoundingBox ==FVector(0.0f))
+	if (AEndActor != nullptr)
+	{		
+		if (FStartNodeExtent ==FVector(0.0f))
 		{
-			m_sizeOfNodeBoundingBox = this->GetOwner()->GetComponentsBoundingBox(false).GetSize() / 2;
+			FStartNodeExtent = this->GetOwner()->GetComponentsBoundingBox(false).GetSize() / 2;
 		}		
+
+		SuccessorPositions = FSuccessorPositions((FStartNodeExtent)*2);
+		AAStarNode* SpawnedNode = nullptr;
+		FActorSpawnParameters SpawnParams;
 		
-		successor_struct = PositionOffset((m_sizeOfNodeBoundingBox)*2);
-		AAStarNode* spawnedNode = nullptr;
-		FActorSpawnParameters spawnParams;
-		
-		spawnParams.Owner = this->GetOwner();
-		spawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		SpawnParams.Owner = this->GetOwner();
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 		FRotator rotator(0.0f);
-		UWorld* world = GetWorld();
+		UWorld* World = GetWorld();
 		FVector spawnLocation = GetOwner()->GetActorLocation();
 
-		spawnedNode = world->SpawnActor<AAStarNode>(AAStarNode::StaticClass(), spawnLocation, rotator, spawnParams);
+		SpawnedNode = World->SpawnActor<AAStarNode>(AAStarNode::StaticClass(), spawnLocation, rotator, SpawnParams);
+		this->StartNode = SpawnedNode;
 		
-		spawnedNode->BoxCollision->SetBoxExtent(m_sizeOfNodeBoundingBox);
-		spawnedNode->b_VisualNodes = b_visualCollisionBox;		
-		m_listPriorityNodes.HeapPush(spawnedNode, [](AAStarNode& a, AAStarNode& b) {return a.gCost < b.gCost; });
-			
-		
-		spawnedNode = nullptr;
-		spawnLocation = m_EndActor->GetActorLocation();
-		spawnedNode = world->SpawnActor<AAStarNode>(AAStarNode::StaticClass(), spawnLocation, rotator, spawnParams);
-		spawnedNode->b_VisualNodes = b_visualCollisionBox;	
+		SpawnedNode->BoxComponent->SetBoxExtent(FStartNodeExtent);
+		SpawnedNode->bNodeDrawExtent = bDrawBoxExtents;		
+		ANodePriority.HeapPush(SpawnedNode, [](AAStarNode& a, AAStarNode& b) {return a.gCost < b.gCost; });
 
-		if (m_endNodeBoundingBox==FVector(0.0f))
+		SpawnedNode = nullptr;
+		spawnLocation = AEndActor->GetActorLocation();
+		SpawnedNode = World->SpawnActor<AAStarNode>(AAStarNode::StaticClass(), spawnLocation, rotator, SpawnParams);
+		this->EndNode = SpawnedNode;
+		SpawnedNode->bNodeDrawExtent = bDrawBoxExtents;	
+
+		if (FEndNodeExtent==FVector(0.0f))
 		{
-			m_endNodeBoundingBox = m_EndActor->GetComponentsBoundingBox(false).GetSize() / 2;			
+			FEndNodeExtent = AEndActor->GetComponentsBoundingBox(false).GetSize()/2;			
 		}
 
-		spawnedNode->BoxCollision->SetBoxExtent(m_endNodeBoundingBox);
-		m_pathList.Add(spawnedNode);
+		SpawnedNode->BoxComponent->SetBoxExtent(FEndNodeExtent);
+		ANodePathList.AddHead(SpawnedNode);
 
-		m_listPriorityNodes.HeapTop()->lCost = 0;
-		m_listPriorityNodes.HeapTop()->gCost =m_listPriorityNodes.HeapTop()->GetSquaredDistanceTo(m_pathList.HeapTop());
-		m_listPriorityNodes.HeapTop()->fCost =m_listPriorityNodes.HeapTop()->gCost +m_listPriorityNodes.HeapTop()->lCost;
+		ANodePriority.HeapTop()->lCost = 0;
+		ANodePriority.HeapTop()->gCost =ANodePriority.HeapTop()->GetSquaredDistanceTo(ANodePathList.GetHead()->GetValue());
+		ANodePriority.HeapTop()->fCost =ANodePriority.HeapTop()->gCost +ANodePriority.HeapTop()->lCost;
 
-		m_pathList.HeapTop()->gCost = 0;
-		check = true;
-		
+		ANodePathList.GetHead()->GetValue()->gCost = 0;
+
+		//TODO: Set up Start and End AActor's collision components to overlap NodeObjectChannel (CustomObjectCollisionChannel)
+		//UBoxComponent* SpawnedBoxComponent =StaticCast<UBoxComponent*>( AEndActor->GetComponentByClass(UBoxComponent::StaticClass()));		
+		//SpawnedBoxComponent->SetCollisionResponseToChannel(ECC_GameTraceChannel1); 
+
+		bPathfindingRequired = true;		
 	}	
 }
 
@@ -68,126 +72,122 @@ void UAStarPathFindingComponent::BeginPlay()
 void UAStarPathFindingComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-	if (check)
+	if (bPathfindingRequired)
 	{
-		if (m_listPriorityNodes.HeapTop() != m_pathList.HeapTop())
+		if (ANodePriority.HeapTop() != EndNode)
 		{
 
 			SpawnNodes();
 			Algorithm();
 		}
-		else
-		{
-			Algorithm();
-
+		else 
+		{			
+			while (ANodePathList.GetHead()->GetValue() != StartNode)
+			{
+				ANodePathList.GetHead()->GetValue()->bNodeDrawExtent=true;
+				ANodePathList.AddHead(ANodePathList.GetHead()->GetValue()->ParentNode);			
+			}
+			bPathfindingRequired = false;
 		}
 	}	
 }
 
 void  UAStarPathFindingComponent::Algorithm()
 {
-	 AAStarNode* currentNode=nullptr;
-	 m_listPriorityNodes.HeapPop(currentNode, [](AAStarNode& a, AAStarNode& b) {return a.gCost < b.gCost; });
+	 AAStarNode* CurrentNode=nullptr;
+	 ANodePriority.HeapPop(CurrentNode, [](AAStarNode& a, AAStarNode& b) {return a.gCost < b.gCost; });
 	
-	for (int i = 0; i < currentNode->ArrayNeighbours.Num(); i++)
+	for (int i = 0; i < CurrentNode->ArrayNeighbours.Num(); i++)
 	{
-		float D = currentNode->GetSquaredDistanceTo(currentNode->ArrayNeighbours[i]);
+		float Distance = CurrentNode->GetSquaredDistanceTo(CurrentNode->ArrayNeighbours[i]);
 
-		if ((currentNode->lCost + D) < currentNode->ArrayNeighbours[i]->lCost)
+		if ((CurrentNode->lCost + Distance) < CurrentNode->ArrayNeighbours[i]->lCost)
 		{
-			currentNode->ArrayNeighbours[i]->ParentNode = currentNode;
-			currentNode->ArrayNeighbours[i]->lCost =currentNode->lCost + D;
-			currentNode->ArrayNeighbours[i]->gCost =currentNode->ArrayNeighbours[i]->GetSquaredDistanceTo(m_pathList[0]);
-			currentNode->ArrayNeighbours[i]->fCost =currentNode->ArrayNeighbours[i]->lCost + currentNode->ArrayNeighbours[i]->gCost;	
-
+			CurrentNode->ArrayNeighbours[i]->ParentNode = CurrentNode;
+			CurrentNode->ArrayNeighbours[i]->lCost =CurrentNode->lCost + Distance;
+			CurrentNode->ArrayNeighbours[i]->gCost =CurrentNode->ArrayNeighbours[i]->GetSquaredDistanceTo(ANodePathList.GetHead()->GetValue());
+			CurrentNode->ArrayNeighbours[i]->fCost =CurrentNode->ArrayNeighbours[i]->lCost + CurrentNode->ArrayNeighbours[i]->gCost;	
 			
-			m_listPriorityNodes.HeapPush(currentNode->ArrayNeighbours[i], [](AAStarNode& a, AAStarNode& b) {return a.gCost < b.gCost; });			
+			ANodePriority.HeapPush(CurrentNode->ArrayNeighbours[i], [](AAStarNode& a, AAStarNode& b) {return a.gCost < b.gCost; });			
 		}
 	}		
 }
 
 void  UAStarPathFindingComponent::SpawnNodes()
 {//SNPAWNS AND CHECKS NEIGHBOURS INTO LIST
-
-
-	successor_struct.AssignNewPositions(m_listPriorityNodes.HeapTop()->GetActorLocation());
-	UWorld* world = GetWorld();
 	
+	SuccessorPositions.AssignNewPositions(ANodePriority.HeapTop()->GetActorLocation());
+	UWorld* world = GetWorld();	
 	
-	for (int i = 0; i< successor_struct.p_successor.Num(); i++)
+	for (int i = 0; i< SuccessorPositions.FVectorSuccessors.Num(); i++)
 	{
-		AAStarNode* spawnedNode = nullptr;
-		FActorSpawnParameters spawnParams;
+		AAStarNode* SpawnedNode = nullptr;
+		FActorSpawnParameters SpawnParams;
 
-		spawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::DontSpawnIfColliding;		
-		spawnParams.Owner = this->GetOwner();
-		spawnParams.Template = NULL;
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::DontSpawnIfColliding;		
+		SpawnParams.Owner = this->GetOwner();
+		SpawnParams.Template = NULL;
 		
 		FRotator rotator(0.0f);
-		FVector spawnLocation = successor_struct.p_successor[i];
-		spawnedNode = world->SpawnActor<AAStarNode>(AAStarNode::StaticClass(), spawnLocation, rotator, spawnParams);
-		
-		if (spawnedNode!=nullptr)
+		FVector spawnLocation = SuccessorPositions.FVectorSuccessors[i];
+		SpawnedNode = world->SpawnActor<AAStarNode>(AAStarNode::StaticClass(), spawnLocation, rotator, SpawnParams);	
+
+		if (SpawnedNode!=nullptr)
 		{			
-			spawnedNode->BoxCollision->SetBoxExtent(m_endNodeBoundingBox);
-			spawnedNode->b_VisualNodes = b_visualCollisionBox;
-			m_listPriorityNodes.HeapTop()->ArrayNeighbours.Add(spawnedNode);
-					
-		}
-		else
-		{
-			//spawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-			//spawnedNode = world->SpawnActor<AAStarNode>(AAStarNode::StaticClass(), spawnLocation, rotator, spawnParams);
+			TArray<AActor*> OverlappingActors;
+			SpawnedNode->GetOverlappingActors(OverlappingActors, AAStarNode::StaticClass());
+			if (OverlappingActors.Num()==0)
+			{
+				SpawnedNode->BoxComponent->SetBoxExtent(FEndNodeExtent);
+				SpawnedNode->bNodeDrawExtent = bDrawBoxExtents;
+				ANodePriority.HeapTop()->ArrayNeighbours.Add(SpawnedNode);
+			}
+			else
+			{
+				for (int i = 0; i < OverlappingActors.Num(); i++)
+				{//maybe check for collision with area > some value
 
-			//TArray<AActor*> OverlappingActors;
-			//spawnedNode->GetOverlappingActors(OverlappingActors, AAStarNode::StaticClass());
-
-			//if (OverlappingActors.Num() != 0)
-			//{
-			//	for (int i = 0; i < OverlappingActors.Num(); i++)
-			//	{//maybe check for collision with area > some value
-
-			//		m_listPriorityNodes.HeapTop()->ArrayNeighbours.HeapPush(StaticCast<AAStarNode*>(OverlappingActors[i]), [](AAStarNode& a, AAStarNode& b) {return a.gCost < b.gCost; });
-
-			//	}
-			//}
-		}
+					ANodePriority.HeapTop()->ArrayNeighbours.Add(StaticCast<AAStarNode*>(OverlappingActors[i]));
+				}
+				SpawnedNode->Destroy();
+			}
+								
+		}		
 	}
 }
 
-
-void  UAStarPathFindingComponent::PositionOffset::AssignConstants(FVector _nodeSpacing)
+void  UAStarPathFindingComponent::FSuccessorPositions::AssignConstants(FVector _nodeSpacing)
 {
-	p_constants.SetNum(26);
+	FVectorConstants.SetNum(26);
 
-	p_constants[0]  = FVector(-_nodeSpacing.X, _nodeSpacing.Y,-_nodeSpacing.Z);
-	p_constants[1]  = FVector(           0.0f, _nodeSpacing.Y,-_nodeSpacing.Z);
-	p_constants[2]  = FVector( _nodeSpacing.X, _nodeSpacing.Y,-_nodeSpacing.Z);
-	p_constants[3]  = FVector(-_nodeSpacing.X,		 	 0.0f,-_nodeSpacing.Z);
-	p_constants[4]  = FVector(           0.0f,           0.0f,-_nodeSpacing.Z);
-	p_constants[5]  = FVector( _nodeSpacing.X,		     0.0f,-_nodeSpacing.Z);
-	p_constants[6]  = FVector(-_nodeSpacing.X,-_nodeSpacing.Y,-_nodeSpacing.Z);
-	p_constants[7]  = FVector(		     0.0f,-_nodeSpacing.Y,-_nodeSpacing.Z);
-	p_constants[8]  = FVector( _nodeSpacing.X,-_nodeSpacing.Y,-_nodeSpacing.Z);
+	FVectorConstants[0]  = FVector(-_nodeSpacing.X, _nodeSpacing.Y,-_nodeSpacing.Z);
+	FVectorConstants[1]  = FVector(           0.0f, _nodeSpacing.Y,-_nodeSpacing.Z);
+	FVectorConstants[2]  = FVector( _nodeSpacing.X, _nodeSpacing.Y,-_nodeSpacing.Z);
+	FVectorConstants[3]  = FVector(-_nodeSpacing.X,		 	  0.0f,-_nodeSpacing.Z);
+	FVectorConstants[4]  = FVector(           0.0f,           0.0f,-_nodeSpacing.Z);
+	FVectorConstants[5]  = FVector( _nodeSpacing.X,		      0.0f,-_nodeSpacing.Z);
+	FVectorConstants[6]  = FVector(-_nodeSpacing.X,-_nodeSpacing.Y,-_nodeSpacing.Z);
+	FVectorConstants[7]  = FVector(		      0.0f,-_nodeSpacing.Y,-_nodeSpacing.Z);
+	FVectorConstants[8]  = FVector( _nodeSpacing.X,-_nodeSpacing.Y,-_nodeSpacing.Z);
 
-	p_constants[9]  = FVector(-_nodeSpacing.X, _nodeSpacing.Y,			 0.0f);
-	p_constants[10] = FVector(		     0.0f, _nodeSpacing.Y,			 0.0f);
-	p_constants[11] = FVector( _nodeSpacing.X, _nodeSpacing.Y,			 0.0f);
-	p_constants[12] = FVector(-_nodeSpacing.X,			 0.0f,			 0.0f);
+	FVectorConstants[9]  = FVector(-_nodeSpacing.X, _nodeSpacing.Y,			  0.0f);
+	FVectorConstants[10] = FVector(		      0.0f, _nodeSpacing.Y,			  0.0f);
+	FVectorConstants[11] = FVector( _nodeSpacing.X, _nodeSpacing.Y,			  0.0f);
+	FVectorConstants[12] = FVector(-_nodeSpacing.X,			  0.0f,			  0.0f);
 	//MIDDLE OF FVector(0,0,0);
-	p_constants[13] = FVector( _nodeSpacing.X,			 0.0f,			 0.0f);
-	p_constants[14] = FVector(-_nodeSpacing.X,-_nodeSpacing.Y,			 0.0f);
-	p_constants[15] = FVector(		     0.0f,-_nodeSpacing.Y,			 0.0f);
-	p_constants[16] = FVector( _nodeSpacing.X,-_nodeSpacing.Y,			 0.0f);
+	FVectorConstants[13] = FVector( _nodeSpacing.X,			  0.0f,			  0.0f);
+	FVectorConstants[14] = FVector(-_nodeSpacing.X,-_nodeSpacing.Y,			  0.0f);
+	FVectorConstants[15] = FVector(		      0.0f,-_nodeSpacing.Y,			  0.0f);
+	FVectorConstants[16] = FVector( _nodeSpacing.X,-_nodeSpacing.Y,			  0.0f);
 
-	p_constants[17] = FVector(-_nodeSpacing.X, _nodeSpacing.Y, _nodeSpacing.Z);
-	p_constants[18] = FVector(		     0.0f, _nodeSpacing.Y, _nodeSpacing.Z);
-	p_constants[19] = FVector( _nodeSpacing.X, _nodeSpacing.Y, _nodeSpacing.Z);
-	p_constants[20] = FVector(-_nodeSpacing.X,			 0.0f, _nodeSpacing.Z);
-	p_constants[21] = FVector(		     0.0f,			 0.0f, _nodeSpacing.Z);
-	p_constants[22] = FVector(_nodeSpacing.X,			 0.0f, _nodeSpacing.Z);
-	p_constants[23] = FVector(-_nodeSpacing.X,-_nodeSpacing.Y, _nodeSpacing.Z);
-	p_constants[24] = FVector(		     0.0f,-_nodeSpacing.Y, _nodeSpacing.Z);
-	p_constants[25] = FVector( _nodeSpacing.X,-_nodeSpacing.Y, _nodeSpacing.Z);
+	FVectorConstants[17] = FVector(-_nodeSpacing.X, _nodeSpacing.Y, _nodeSpacing.Z);
+	FVectorConstants[18] = FVector(		     0.0f,  _nodeSpacing.Y, _nodeSpacing.Z);
+	FVectorConstants[19] = FVector( _nodeSpacing.X, _nodeSpacing.Y, _nodeSpacing.Z);
+	FVectorConstants[20] = FVector(-_nodeSpacing.X,			  0.0f, _nodeSpacing.Z);
+	FVectorConstants[21] = FVector(		      0.0f,			  0.0f, _nodeSpacing.Z);
+	FVectorConstants[22] = FVector( _nodeSpacing.X,			  0.0f, _nodeSpacing.Z);
+	FVectorConstants[23] = FVector(-_nodeSpacing.X,-_nodeSpacing.Y, _nodeSpacing.Z);
+	FVectorConstants[24] = FVector(		      0.0f,-_nodeSpacing.Y, _nodeSpacing.Z);
+	FVectorConstants[25] = FVector( _nodeSpacing.X,-_nodeSpacing.Y, _nodeSpacing.Z);
 }
 

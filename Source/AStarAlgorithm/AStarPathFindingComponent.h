@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// Rommulluss Caraiman 
 
 #pragma once
 
@@ -6,7 +6,6 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "AStarPathFindingComponent.generated.h"
-
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class ASTARALGORITHM_API UAStarPathFindingComponent : public UActorComponent
@@ -19,13 +18,13 @@ public:
 	
 	
 	UPROPERTY(EditAnywhere)
-		bool b_visualCollisionBox;
+		bool bDrawBoxExtents;
 
 	UPROPERTY(EditAnywhere)
-		FVector m_sizeOfNodeBoundingBox = FVector(0.0f);
+		FVector FStartNodeExtent = FVector(0.0f);
 
 	UPROPERTY(EditAnywhere)
-		FVector m_endNodeBoundingBox = FVector(0.0f);
+		FVector FEndNodeExtent = FVector(0.0f);
 
 protected:
 	// Called when the game starts
@@ -34,68 +33,51 @@ protected:
 public:	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-	TArray<AAStarNode*> GetPriorityListNodes() { return this->m_listPriorityNodes; }
+	
 private:
+
 	//Methods
-	void  Algorithm();
+	void Algorithm();
 	void SpawnNodes();
 
 	//Elements
-	bool check = false;
-	
+	bool bPathfindingRequired = false;
 
 	UPROPERTY(EditAnywhere)
-		AActor* m_EndActor=nullptr;
+		AActor* AEndActor=nullptr;
 	
-	TArray<AAStarNode*> m_listPriorityNodes;
-	TArray<AAStarNode*> m_pathList;
-
-	bool finishedPathfinding = false;
-
-	static struct PositionOffset
+	TArray<AAStarNode*> ANodePriority;
+	TDoubleLinkedList<AAStarNode*> ANodePathList;	
+	AAStarNode* StartNode;
+	AAStarNode* EndNode;
+	static struct FSuccessorPositions
 	{
-	private:
-		
-		
-		
-
+	private:	
+		void AssignConstants(const FVector _nodeSpacing);
+		TArray<FVector> FVectorConstants;
 	public:
-		TArray<FVector> p_successor;
-		TArray<FVector> p_constants;
-		PositionOffset() 
+		TArray<FVector> FVectorSuccessors;
+		
+
+		FSuccessorPositions(){}
+		FSuccessorPositions(const FVector _FNodeExtent)
 		{
-
-		}		
-		PositionOffset(const FVector _nodeSpacing)
-		{
-
-			AssignConstants(_nodeSpacing);
-			p_successor.SetNum(p_constants.Num());
-
+			AssignConstants(_FNodeExtent);
+			FVectorSuccessors.SetNum(FVectorConstants.Num());
 		}
-		~PositionOffset()
-		{
-		}
-		int Num() { return p_successor.Num(); }
+		~FSuccessorPositions(){}
+
+		int Num() { return FVectorSuccessors.Num(); }
+
 		void AssignNewPositions(const FVector _currentNodePosition)
 		{
-			for (int i = 0; i < p_successor.Num(); i++)
+			for (int i = 0; i < FVectorSuccessors.Num(); i++)
 			{
-
-				p_successor[i] = p_constants[i] + _currentNodePosition;
-				
-				
-
+				FVectorSuccessors[i] = FVectorConstants[i] + _currentNodePosition;
 			}
-
-		}
-		
-	private:
-
-		void AssignConstants(const FVector _nodeSpacing);
-		
+		}		
 	};
 
-	PositionOffset successor_struct;
+	FSuccessorPositions SuccessorPositions;
 	
 };
