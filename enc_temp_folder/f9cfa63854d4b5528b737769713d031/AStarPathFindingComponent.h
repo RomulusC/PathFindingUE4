@@ -14,8 +14,7 @@ class ASTARALGORITHM_API UAStarPathFindingComponent : public UActorComponent
 
 public:	
 	// Sets default values for this component's properties
-	UAStarPathFindingComponent();
-	
+	UAStarPathFindingComponent();	
 	
 	UPROPERTY(EditAnywhere)
 		bool bDrawBoxExtents;
@@ -35,6 +34,8 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	
 private:
+	//Predicate Lambda: Sorts Heap structure of Nodes by smallest fCost first
+	TFunction<bool(const AAStarNode& a, AAStarNode& b)> SortingPredicate = [&](const AAStarNode& a, AAStarNode& b) {return a.fCost < b.fCost;};	
 
 	//Methods
 	void Algorithm();
@@ -56,8 +57,7 @@ private:
 		void AssignConstants(const FVector _nodeSpacing);
 		TArray<FVector> FVectorConstants;
 	public:
-		TArray<FVector> FVectorSuccessors;
-		
+		TArray<FVector> FVectorSuccessors;	
 
 		FSuccessorPositions(){}
 		FSuccessorPositions(const FVector _FNodeExtent)
@@ -79,5 +79,4 @@ private:
 	};
 
 	FSuccessorPositions SuccessorPositions;
-	
 };

@@ -1,7 +1,6 @@
 // Rommulluss Caraiman 
 
 #pragma once
-
 #include "AStarNode.h"
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
@@ -14,8 +13,7 @@ class ASTARALGORITHM_API UAStarPathFindingComponent : public UActorComponent
 
 public:	
 	// Sets default values for this component's properties
-	UAStarPathFindingComponent();
-	
+	UAStarPathFindingComponent();	
 	
 	UPROPERTY(EditAnywhere)
 		bool bDrawBoxExtents;
@@ -24,7 +22,7 @@ public:
 		FVector FStartNodeExtent = FVector(0.0f);
 
 	UPROPERTY(EditAnywhere)
-		FVector FEndNodeExtent = FVector(0.0f);
+		FVector FEndNodeExtent	 = FVector(0.0f);
 
 protected:
 	// Called when the game starts
@@ -58,8 +56,7 @@ private:
 		void AssignConstants(const FVector _nodeSpacing);
 		TArray<FVector> FVectorConstants;
 	public:
-		TArray<FVector> FVectorSuccessors;
-		
+		TArray<FVector> FVectorSuccessors;	
 
 		FSuccessorPositions(){}
 		FSuccessorPositions(const FVector _FNodeExtent)

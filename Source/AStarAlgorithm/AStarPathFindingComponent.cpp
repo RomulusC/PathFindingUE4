@@ -157,7 +157,6 @@ void  UAStarPathFindingComponent::SpawnNodes()
 				}
 				SpawnedNode->Destroy();
 			}
-
 		}
 	}
 }
@@ -166,33 +165,33 @@ void  UAStarPathFindingComponent::FSuccessorPositions::AssignConstants(FVector _
 {
 	FVectorConstants.SetNum(26);
 
-	FVectorConstants[0] = FVector(-_nodeSpacing.X, _nodeSpacing.Y, -_nodeSpacing.Z);
-	FVectorConstants[1] = FVector(0.0f, _nodeSpacing.Y, -_nodeSpacing.Z);
-	FVectorConstants[2] = FVector(_nodeSpacing.X, _nodeSpacing.Y, -_nodeSpacing.Z);
-	FVectorConstants[3] = FVector(-_nodeSpacing.X, 0.0f, -_nodeSpacing.Z);
-	FVectorConstants[4] = FVector(0.0f, 0.0f, -_nodeSpacing.Z);
-	FVectorConstants[5] = FVector(_nodeSpacing.X, 0.0f, -_nodeSpacing.Z);
-	FVectorConstants[6] = FVector(-_nodeSpacing.X, -_nodeSpacing.Y, -_nodeSpacing.Z);
-	FVectorConstants[7] = FVector(0.0f, -_nodeSpacing.Y, -_nodeSpacing.Z);
-	FVectorConstants[8] = FVector(_nodeSpacing.X, -_nodeSpacing.Y, -_nodeSpacing.Z);
+	FVectorConstants[0]  = FVector(-_nodeSpacing.X, _nodeSpacing.Y,-_nodeSpacing.Z);
+	FVectorConstants[1]  = FVector(			  0.0f, _nodeSpacing.Y,-_nodeSpacing.Z);
+	FVectorConstants[2]  = FVector( _nodeSpacing.X, _nodeSpacing.Y,-_nodeSpacing.Z);
+	FVectorConstants[3]  = FVector(-_nodeSpacing.X,			  0.0f,-_nodeSpacing.Z);
+	FVectorConstants[4]  = FVector(			  0.0f,			  0.0f,-_nodeSpacing.Z);
+	FVectorConstants[5]  = FVector( _nodeSpacing.X,			  0.0f,-_nodeSpacing.Z);
+	FVectorConstants[6]  = FVector(-_nodeSpacing.X,-_nodeSpacing.Y,-_nodeSpacing.Z);
+	FVectorConstants[7]  = FVector(			  0.0f,-_nodeSpacing.Y,-_nodeSpacing.Z);
+	FVectorConstants[8]  = FVector( _nodeSpacing.X,-_nodeSpacing.Y,-_nodeSpacing.Z);
 
-	FVectorConstants[9] = FVector(-_nodeSpacing.X, _nodeSpacing.Y, 0.0f);
-	FVectorConstants[10] = FVector(0.0f, _nodeSpacing.Y, 0.0f);
-	FVectorConstants[11] = FVector(_nodeSpacing.X, _nodeSpacing.Y, 0.0f);
-	FVectorConstants[12] = FVector(-_nodeSpacing.X, 0.0f, 0.0f);
-	//MIDDLE OF FVector(0,0,0);
-	FVectorConstants[13] = FVector(_nodeSpacing.X, 0.0f, 0.0f);
-	FVectorConstants[14] = FVector(-_nodeSpacing.X, -_nodeSpacing.Y, 0.0f);
-	FVectorConstants[15] = FVector(0.0f, -_nodeSpacing.Y, 0.0f);
-	FVectorConstants[16] = FVector(_nodeSpacing.X, -_nodeSpacing.Y, 0.0f);
+	FVectorConstants[9]  = FVector(-_nodeSpacing.X, _nodeSpacing.Y,			  0.0f);
+	FVectorConstants[10] = FVector(			  0.0f, _nodeSpacing.Y,			  0.0f);
+	FVectorConstants[11] = FVector( _nodeSpacing.X, _nodeSpacing.Y,			  0.0f);
+	FVectorConstants[12] = FVector(-_nodeSpacing.X,			  0.0f,			  0.0f);
+	//Position of actor    FVector(				 0,				0,			     0);
+	FVectorConstants[13] = FVector( _nodeSpacing.X,			  0.0f,			  0.0f);
+	FVectorConstants[14] = FVector(-_nodeSpacing.X,-_nodeSpacing.Y,			  0.0f);
+	FVectorConstants[15] = FVector(			  0.0f,-_nodeSpacing.Y,			  0.0f);
+	FVectorConstants[16] = FVector( _nodeSpacing.X,-_nodeSpacing.Y,			  0.0f);
 
 	FVectorConstants[17] = FVector(-_nodeSpacing.X, _nodeSpacing.Y, _nodeSpacing.Z);
-	FVectorConstants[18] = FVector(0.0f, _nodeSpacing.Y, _nodeSpacing.Z);
-	FVectorConstants[19] = FVector(_nodeSpacing.X, _nodeSpacing.Y, _nodeSpacing.Z);
-	FVectorConstants[20] = FVector(-_nodeSpacing.X, 0.0f, _nodeSpacing.Z);
-	FVectorConstants[21] = FVector(0.0f, 0.0f, _nodeSpacing.Z);
-	FVectorConstants[22] = FVector(_nodeSpacing.X, 0.0f, _nodeSpacing.Z);
-	FVectorConstants[23] = FVector(-_nodeSpacing.X, -_nodeSpacing.Y, _nodeSpacing.Z);
-	FVectorConstants[24] = FVector(0.0f, -_nodeSpacing.Y, _nodeSpacing.Z);
-	FVectorConstants[25] = FVector(_nodeSpacing.X, -_nodeSpacing.Y, _nodeSpacing.Z);
+	FVectorConstants[18] = FVector(			  0.0f, _nodeSpacing.Y, _nodeSpacing.Z);
+	FVectorConstants[19] = FVector( _nodeSpacing.X, _nodeSpacing.Y, _nodeSpacing.Z);
+	FVectorConstants[20] = FVector(-_nodeSpacing.X,			  0.0f, _nodeSpacing.Z);
+	FVectorConstants[21] = FVector(			  0.0f,			  0.0f, _nodeSpacing.Z);
+	FVectorConstants[22] = FVector( _nodeSpacing.X,		      0.0f, _nodeSpacing.Z);
+	FVectorConstants[23] = FVector(-_nodeSpacing.X,-_nodeSpacing.Y, _nodeSpacing.Z);
+	FVectorConstants[24] = FVector(			  0.0f,-_nodeSpacing.Y, _nodeSpacing.Z);
+	FVectorConstants[25] = FVector( _nodeSpacing.X,-_nodeSpacing.Y, _nodeSpacing.Z);
 }
