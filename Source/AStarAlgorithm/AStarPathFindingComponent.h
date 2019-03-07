@@ -1,8 +1,10 @@
 // Rommulluss Caraiman 
 
 #pragma once
+#include "DrawDebugHelpers.h"
 #include "AStarNode.h"
 #include "CoreMinimal.h"
+#include "Components/MeshComponent.h"
 #include "Components/ActorComponent.h"
 #include "AStarPathFindingComponent.generated.h"
 
@@ -17,6 +19,8 @@ public:
 	
 	UPROPERTY(EditAnywhere)
 		bool bDrawBoxExtents;
+	UPROPERTY(EditAnywhere)
+		bool bDrawPathBoxExtents;
 
 	UPROPERTY(EditAnywhere)
 		FVector FStartNodeExtent = FVector(0.0f);
@@ -34,22 +38,31 @@ public:
 	
 private:
 	//Predicate Lambda: Sorts Heap structure of Nodes by smallest fCost first
-	TFunction<bool(const AAStarNode& a, AAStarNode& b)> SortingPredicate = [&](const AAStarNode& a, AAStarNode& b) {return a.fCost < b.fCost;};	
+	TFunction<bool(const AAStarNode& a, AAStarNode& b)> SortingPredicate = [&](const AAStarNode& a, AAStarNode& b) {return a.fCost < b.fCost;};	//Predicate to keep Array of Nodes in priority queue heap format
 
 	//Methods
 	void Algorithm();
 	void SpawnNodes();
+	FHitResult PerformInitialRaycast();
+	bool IsEndInSight(AAStarNode* _node);
+
+	
 
 	//Elements
 	bool bPathfindingRequired = false;
 
 	UPROPERTY(EditAnywhere)
 		AActor* AEndActor=nullptr;
-	
+
 	TArray<AAStarNode*> ANodePriority;
 	TDoubleLinkedList<AAStarNode*> ANodePathList;	
 	AAStarNode* StartNode;
 	AAStarNode* EndNode;
+	
+
+
+
+
 	static struct FSuccessorPositions
 	{
 	private:	
@@ -78,4 +91,6 @@ private:
 	};
 
 	FSuccessorPositions SuccessorPositions;
+	
+	
 };

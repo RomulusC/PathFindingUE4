@@ -36,7 +36,7 @@ void UAStarPathFindingComponent::BeginPlay()
 		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 		SpawnedNode = World->SpawnActor<AAStarNode>(AAStarNode::StaticClass(), spawnLocation, rotator, SpawnParams);
 		SpawnedNode->BoxComponent->SetBoxExtent(FStartNodeExtent);
-		SpawnedNode->bNodeDrawExtent = bDrawBoxExtents;
+		SpawnedNode->bNodeDrawExtent = !bDrawBoxExtents;
 		this->StartNode = SpawnedNode;		
 		StartNode->gCost = 0;
 		StartNode->hCost = StartNode->GetSquaredDistanceTo(EndNode);
@@ -61,29 +61,26 @@ void UAStarPathFindingComponent::BeginPlay()
 			SpawnedNode = nullptr;
 		}		
 		
-		UMeshComponent* SpawnedMeshComponent = dynamic_cast<UMeshComponent*>(AEndActor->GetComponentByClass(UMeshComponent::StaticClass()));
-		if (SpawnedMeshComponent!=nullptr)
-		{
-			SpawnedMeshComponent->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Overlap);
-			spawnLocation = AEndActor->GetActorLocation();
-			SpawnedNode = World->SpawnActor<AAStarNode>(AAStarNode::StaticClass(), spawnLocation, rotator, SpawnParams);
-			SpawnedNode->bNodeDrawExtent = bDrawBoxExtents;
+		UMeshComponent* SpawnedMeshComponent = StaticCast<UMeshComponent*>(AEndActor->GetComponentByClass(UMeshComponent::StaticClass()));
+		SpawnedMeshComponent->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Overlap);			
+		spawnLocation = AEndActor->GetActorLocation();
+		SpawnedNode = World->SpawnActor<AAStarNode>(AAStarNode::StaticClass(), spawnLocation, rotator, SpawnParams);		
+		SpawnedNode->bNodeDrawExtent = bDrawBoxExtents;
 
-			if (FEndNodeExtent == FVector(0.0f))
-			{
-				FEndNodeExtent = AEndActor->GetComponentsBoundingBox(false).GetSize() / 2;
-			}
-
-			SpawnedNode->BoxComponent->SetBoxExtent(FEndNodeExtent);
-			ANodePathList.AddHead(SpawnedNode);
-			this->EndNode = SpawnedNode;
-			EndNode->hCost = 0;			
-			bPathfindingRequired = true;
-		}
-		else
+		if (FEndNodeExtent == FVector(0.0f))
 		{
-			bPathfindingRequired = false;
+			FEndNodeExtent = AEndActor->GetComponentsBoundingBox(false).GetSize() / 2;
 		}
+
+		SpawnedNode->BoxComponent->SetBoxExtent(FEndNodeExtent);
+		ANodePathList.AddHead(SpawnedNode);
+		this->EndNode = SpawnedNode;	
+
+		EndNode->hCost = 0;
+
+		SpawnedMeshComponent = StaticCast<UMeshComponent*>(AEndActor->GetComponentByClass(UMeshComponent::StaticClass()));
+		SpawnedMeshComponent->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Overlap);		
+		bPathfindingRequired = true;
 		
 	}
 }
@@ -108,8 +105,6 @@ void UAStarPathFindingComponent::TickComponent(float DeltaTime, ELevelTick TickT
 				ANodePathList.GetHead()->GetValue()->ExtentsColor = FColor::Cyan;
 				ANodePathList.AddHead(ANodePathList.GetHead()->GetValue()->ParentNode);
 			}
-			StartNode->bNodeDrawExtent = bDrawPathBoxExtents;
-			StartNode->ExtentsColor = FColor::Cyan;
 			bPathfindingRequired = false;
 		}
 	}
@@ -119,9 +114,8 @@ FHitResult UAStarPathFindingComponent::PerformInitialRaycast()
 	FHitResult OutHit;
 	FVector startActorLocation = this->GetOwner()->GetActorLocation();
 	FVector endActorLocation = AEndActor->GetActorLocation();
-	
-	//GetWorld()->SweepSingleByChannel(OutHit,startActorLocation,endActorLocation, this->GetOwner()->GetActorQuat(), ECollisionChannel::ECC_Visibility,StartNode->BoxComponent->GetCollisionShape());
-	GetWorld()->LineTraceSingleByChannel(OutHit, startActorLocation, endActorLocation, ECollisionChannel::ECC_Visibility, ECR_Block);
+	GetWorld()->SweepSingleByChannel(OutHit,startActorLocation,endActorLocation, this->GetOwner()->GetActorQuat(), ECollisionChannel::ECC_Visibility,StartNode->BoxComponent->GetCollisionShape(), ECR_Block);
+	//GetWorld()->LineTraceSingleByChannel(OutHit, startActorLocation, endActorLocation, ECollisionChannel::ECC_Visibility, ECR_Block);
 	
 		return OutHit;
 }
@@ -132,7 +126,7 @@ bool UAStarPathFindingComponent::IsEndInSight(AAStarNode* _node)
 	FVector endActorLocation = AEndActor->GetActorLocation();
 	GetWorld()->LineTraceSingleByChannel(OutHit, startActorLocation, endActorLocation, ECollisionChannel::ECC_Visibility, ECR_Block);
 	if (OutHit.Actor== AEndActor)
-	{			
+	{
 		return true;
 	}
 	else
@@ -148,12 +142,8 @@ void  UAStarPathFindingComponent::Algorithm()
 
 	if (IsEndInSight(CurrentNode))
 	{
-		EndNode->gCost = CurrentNode->gCost + CurrentNode->GetDistanceTo(EndNode);
-		EndNode->fCost = EndNode->gCost + EndNode->hCost;
 		ANodePriority.HeapPush(EndNode, SortingPredicate);
 		EndNode->ParentNode = CurrentNode;
-
-		
 		
 	}	
 	for (int i = 0; i < CurrentNode->ArrayNeighbours.Num(); i++)
@@ -217,7 +207,9 @@ void  UAStarPathFindingComponent::SpawnNodes()
 
 void  UAStarPathFindingComponent::FSuccessorPositions::AssignConstants(FVector _nodeSpacing)
 {
-	FVectorConstants.SetNum(26);	
+	FVectorConstants.SetNum(26);
+
+	
 
 	FVectorConstants[0]  = FVector(-_nodeSpacing.X, _nodeSpacing.Y,-_nodeSpacing.Z);
 	FVectorConstants[1]  = FVector(			  0.0f, _nodeSpacing.Y,-_nodeSpacing.Z);

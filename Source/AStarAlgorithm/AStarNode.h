@@ -3,7 +3,6 @@
 #pragma once
 #include "Collision.h"
 #include "Engine/CollisionProfile.h"
-#include "Components/StaticMeshComponent.h"
 #include "Components/BoxComponent.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
@@ -16,13 +15,14 @@ class ASTARALGORITHM_API AAStarNode : public AActor
 
 private:
 	USceneComponent* SceneComponent;
-
+	bool collisionChange = false;
+	
 public:
 	// Sets default values for this actor's properties
 	AAStarNode();
 
 	bool bNodeDrawExtent = false;
-
+	FColor ExtentsColor = FColor::Green;
 	UPROPERTY(VisibleAnywhere)
 		UBoxComponent* BoxComponent;
 
@@ -30,10 +30,10 @@ public:
 	TArray<AAStarNode*> ArrayNeighbours;
 
 	UPROPERTY(VisibleAnywhere)
-		float lCost = INFINITY;
+		float gCost = INFINITY;
 
 	UPROPERTY(VisibleAnywhere)
-		float gCost = INFINITY;
+		float hCost = INFINITY;
 
 	UPROPERTY(VisibleAnywhere)
 		float fCost = INFINITY;

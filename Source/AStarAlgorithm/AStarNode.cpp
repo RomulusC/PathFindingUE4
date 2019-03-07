@@ -3,7 +3,7 @@
 #include "AStarNode.h"
 #include "ConstructorHelpers.h"
 #include "DrawDebugHelpers.h"
-
+#include "AStarPathFindingComponent.h" 
 
 // Sets default values
 AAStarNode::AAStarNode()
@@ -15,26 +15,32 @@ AAStarNode::AAStarNode()
 	this->RootComponent = SceneComponent;
 
 	BoxComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("BoxComponent"));
-	BoxComponent->SetCollisionProfileName(FName("NodePreset"));
+	BoxComponent->SetCollisionProfileName(FName("NodePreset"));	
 	BoxComponent->bMultiBodyOverlap = true;
 	BoxComponent->SetCanEverAffectNavigation(false);
 	BoxComponent->SetUseCCD(true);
 	BoxComponent->SetupAttachment(GetRootComponent());
+	
 }
 
 // Called when the game starts or when spawned
 void AAStarNode::BeginPlay()
 {
 	Super::BeginPlay();
+	
+	
+	BoxComponent->SetCollisionProfileName(FName("SpawnedNodePreset"));	
+	
 }
 
 // Called every frame
 void AAStarNode::Tick(float DeltaTime)
 {
-	Super::Tick(DeltaTime);
+	Super::Tick(DeltaTime);	
 	if (bNodeDrawExtent)
 	{
-		DrawDebugBox(GetWorld(), this->GetActorLocation(), this->GetComponentsBoundingBox().GetExtent(), FColor::Green, true, 5);
+		DrawDebugBox(GetWorld(), this->GetActorLocation(), this->GetComponentsBoundingBox().GetExtent(), ExtentsColor, true, 5);
 	}
+	
 }
 
