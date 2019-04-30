@@ -20,7 +20,7 @@ private:
 public:
 	// Sets default values for this actor's properties
 	AAStarNode();
-
+	
 	bool bNodeDrawExtent = false;
 	FColor ExtentsColor = FColor::Green;
 	UPROPERTY(VisibleAnywhere)
@@ -30,13 +30,15 @@ public:
 	TArray<AAStarNode*> ArrayNeighbours;
 
 	UPROPERTY(VisibleAnywhere)
-		float gCost = INFINITY;
+		unsigned int depth = INFINITY;
+	UPROPERTY(VisibleAnywhere)
+		float gCost;
 
 	UPROPERTY(VisibleAnywhere)
-		float hCost = INFINITY;
+		float hCost;
 
 	UPROPERTY(VisibleAnywhere)
-		float fCost = INFINITY;
+		float fCost;
 
 	bool IsNodeVisited = false;
 

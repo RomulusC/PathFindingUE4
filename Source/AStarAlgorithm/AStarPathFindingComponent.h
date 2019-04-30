@@ -15,12 +15,14 @@ class ASTARALGORITHM_API UAStarPathFindingComponent : public UActorComponent
 
 public:	
 	// Sets default values for this component's properties
-	UAStarPathFindingComponent();	
+	UAStarPathFindingComponent();		
 	
 	UPROPERTY(EditAnywhere)
 		bool bDrawBoxExtents;
 	UPROPERTY(EditAnywhere)
 		bool bDrawPathBoxExtents;
+	UPROPERTY(EditAnywhere)
+		bool bLineOfSightOptimisation;
 
 	UPROPERTY(EditAnywhere)
 		FVector FStartNodeExtent = FVector(0.0f);
@@ -36,32 +38,28 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	
-private:
+private:	
+
 	//Predicate Lambda: Sorts Heap structure of Nodes by smallest fCost first
-	TFunction<bool(const AAStarNode& a, AAStarNode& b)> SortingPredicate = [&](const AAStarNode& a, AAStarNode& b) {return a.fCost < b.fCost;};	//Predicate to keep Array of Nodes in priority queue heap format
+	 const TFunction<bool(const AAStarNode& a, AAStarNode& b)> SORTING_PREDICATE_LAMBDA = [&](const AAStarNode& a, AAStarNode& b) {return a.fCost < b.fCost;};	//Predicate to keep Array of Nodes in priority queue heap format
 
 	//Methods
 	void Algorithm();
-	void SpawnNodes();
-	FHitResult PerformInitialRaycast();
-	bool IsEndInSight(AAStarNode* _node);
-
-	
+	void SpawnNodes();		
+	bool IsEndInSight(AAStarNode* _node);	
 
 	//Elements
 	bool bPathfindingRequired = false;
+	AAStarNode* travelToNextNode;
+	FVector moveVector;
 
 	UPROPERTY(EditAnywhere)
 		AActor* AEndActor=nullptr;
 
 	TArray<AAStarNode*> ANodePriority;
-	TDoubleLinkedList<AAStarNode*> ANodePathList;	
+	TArray<AAStarNode*> ANodePathList;
 	AAStarNode* StartNode;
 	AAStarNode* EndNode;
-	
-
-
-
 
 	static struct FSuccessorPositions
 	{
@@ -91,6 +89,5 @@ private:
 	};
 
 	FSuccessorPositions SuccessorPositions;
-	
 	
 };

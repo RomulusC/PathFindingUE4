@@ -14,7 +14,7 @@ UAStarPathFindingComponent::UAStarPathFindingComponent()
 // Called when the game starts
 void UAStarPathFindingComponent::BeginPlay()
 {
-	Super::BeginPlay();
+	Super::BeginPlay();	
 	
 	if (AEndActor != nullptr)
 	{
@@ -23,48 +23,35 @@ void UAStarPathFindingComponent::BeginPlay()
 			FStartNodeExtent = this->GetOwner()->GetComponentsBoundingBox(false).GetSize() / 2;
 		}
 
-		SuccessorPositions = FSuccessorPositions(FStartNodeExtent*2);
+		SuccessorPositions = FSuccessorPositions(FStartNodeExtent*2+.01f);
 		AAStarNode* SpawnedNode = nullptr;	
 		UWorld* World = GetWorld();
 		FActorSpawnParameters SpawnParams;
 		SpawnParams.Owner = this->GetOwner();
 		FRotator rotator(0.0f);
 		FVector spawnLocation;
-		ANodePriority.Reserve(125000); //reserve approximately 1mb array of node addresses in priority queue heap arrangement
+		ANodePriority.Reserve(125000); //reserve approximately 1mb array of node addresses for priority queue heap
 
 		spawnLocation = GetOwner()->GetActorLocation();
 		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 		SpawnedNode = World->SpawnActor<AAStarNode>(AAStarNode::StaticClass(), spawnLocation, rotator, SpawnParams);
-		SpawnedNode->BoxComponent->SetBoxExtent(FStartNodeExtent);
+		//SpawnedNode->BoxComponent->SetBoxExtent(FStartNodeExtent);
 		SpawnedNode->bNodeDrawExtent = bDrawBoxExtents;
-		this->StartNode = SpawnedNode;		
+		this->StartNode = SpawnedNode;	
+		StartNode->depth = 0;
 		StartNode->gCost = 0;
-		StartNode->hCost = StartNode->GetSquaredDistanceTo(EndNode);
+		StartNode->hCost = StartNode->GetDistanceTo(EndNode);
 		StartNode->fCost = StartNode->gCost + StartNode->hCost;
-		ANodePriority.HeapPush(SpawnedNode, SortingPredicate);
+		ANodePriority.HeapPush(SpawnedNode, SORTING_PREDICATE_LAMBDA);
 		SpawnedNode = nullptr;
-
-		FHitResult HitResult = PerformInitialRaycast();
-		if (HitResult.IsValidBlockingHit())
-		{
-			spawnLocation = HitResult.ImpactPoint + (HitResult.ImpactNormal * FStartNodeExtent*1.2);
-			SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-			SpawnedNode = World->SpawnActor<AAStarNode>(AAStarNode::StaticClass(), spawnLocation, rotator, SpawnParams);
-			SpawnedNode->BoxComponent->SetBoxExtent(FStartNodeExtent);
-			SpawnedNode->bNodeDrawExtent = bDrawBoxExtents;	
-
-			SpawnedNode->gCost = SpawnedNode->GetSquaredDistanceTo(StartNode);
-			SpawnedNode->hCost = SpawnedNode->GetSquaredDistanceTo(AEndActor);
-			SpawnedNode->fCost = SpawnedNode->gCost + SpawnedNode->hCost;
-			SpawnedNode->ParentNode = StartNode;
-			ANodePriority.HeapPush(SpawnedNode, SortingPredicate);
-			SpawnedNode = nullptr;
-		}		
 		
-		UMeshComponent* SpawnedMeshComponent = dynamic_cast<UMeshComponent*>(AEndActor->GetComponentByClass(UMeshComponent::StaticClass()));
-		if (SpawnedMeshComponent!=nullptr)
+		UMeshComponent* SpawnedMeshComponentEnd = dynamic_cast<UMeshComponent*>(AEndActor->GetComponentByClass(UMeshComponent::StaticClass()));
+		UMeshComponent* SpawnedMeshComponentStart = dynamic_cast<UMeshComponent*>(AEndActor->GetComponentByClass(UMeshComponent::StaticClass()));
+		if (SpawnedMeshComponentEnd !=nullptr)
 		{
-			SpawnedMeshComponent->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Overlap);
+			SpawnedMeshComponentEnd->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Overlap);
+			SpawnedMeshComponentStart->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Overlap);
+
 			spawnLocation = AEndActor->GetActorLocation();
 			SpawnedNode = World->SpawnActor<AAStarNode>(AAStarNode::StaticClass(), spawnLocation, rotator, SpawnParams);
 			SpawnedNode->bNodeDrawExtent = bDrawBoxExtents;
@@ -74,105 +61,103 @@ void UAStarPathFindingComponent::BeginPlay()
 				FEndNodeExtent = AEndActor->GetComponentsBoundingBox(false).GetSize() / 2;
 			}
 
-			SpawnedNode->BoxComponent->SetBoxExtent(FEndNodeExtent);
-			ANodePathList.AddHead(SpawnedNode);
+			SpawnedNode->BoxComponent->SetBoxExtent(FEndNodeExtent);			
 			this->EndNode = SpawnedNode;
 			EndNode->hCost = 0;			
+			ANodePathList.Add(EndNode);
 			bPathfindingRequired = true;
 		}
 		else
 		{
 			bPathfindingRequired = false;
-		}
-		
+		}		
 	}
 }
 
-// Called every frame
 void UAStarPathFindingComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-		if (bPathfindingRequired)
+	
+		if (bPathfindingRequired&&ANodePriority.Num() != 0)
 		{		
-		if (ANodePriority.HeapTop() != EndNode)
-		{
-			SpawnNodes();
-			Algorithm();
-		}
-		else
-		{
-			while (ANodePathList.GetHead()->GetValue() != StartNode)
+			if (ANodePriority.HeapTop() != EndNode)
 			{
-				ANodePathList.GetHead()->GetValue()->bNodeDrawExtent = bDrawPathBoxExtents;
-				ANodePathList.GetHead()->GetValue()->ExtentsColor = FColor::Cyan;
-				ANodePathList.AddHead(ANodePathList.GetHead()->GetValue()->ParentNode);
+				SpawnNodes();
+				Algorithm();
 			}
+			else
+			{
+				while (ANodePathList.Last() != StartNode)
+				{
+					ANodePathList.Last()->bNodeDrawExtent = bDrawPathBoxExtents;
+					ANodePathList.Last()->ExtentsColor = FColor::Cyan;
+					ANodePathList.Add(ANodePathList.Last()->ParentNode);
+				}
 			StartNode->bNodeDrawExtent = bDrawPathBoxExtents;
 			StartNode->ExtentsColor = FColor::Cyan;
-			bPathfindingRequired = false;
+			bPathfindingRequired = false;	
+			travelToNextNode = ANodePathList.Pop();
+			}			
 		}
-	}
+		
+		if (!bPathfindingRequired)
+		{
+			if (this->GetOwner()->GetDistanceTo(travelToNextNode) >= 0.01f )
+			{
+				this->GetOwner()->SetActorLocation(this->GetOwner()->GetActorLocation() + moveVector);
+
+			}
+			else if (travelToNextNode != EndNode)
+			{
+				travelToNextNode = ANodePathList.Pop();
+				moveVector = .1f*(travelToNextNode->GetActorLocation() - this->GetOwner()->GetActorLocation());
+			}			
+		}
 }
-FHitResult UAStarPathFindingComponent::PerformInitialRaycast()
-{
-	FHitResult OutHit;
-	FVector startActorLocation = this->GetOwner()->GetActorLocation();
-	FVector endActorLocation = AEndActor->GetActorLocation();
-	
-	//GetWorld()->SweepSingleByChannel(OutHit,startActorLocation,endActorLocation, this->GetOwner()->GetActorQuat(), ECollisionChannel::ECC_Visibility,StartNode->BoxComponent->GetCollisionShape());
-	GetWorld()->LineTraceSingleByChannel(OutHit, startActorLocation, endActorLocation, ECollisionChannel::ECC_Visibility, ECR_Block);
-	
-		return OutHit;
-}
+
 bool UAStarPathFindingComponent::IsEndInSight(AAStarNode* _node)
 {
 	FHitResult OutHit;
 	FVector startActorLocation =_node->GetActorLocation();
 	FVector endActorLocation = AEndActor->GetActorLocation();
-	GetWorld()->LineTraceSingleByChannel(OutHit, startActorLocation, endActorLocation, ECollisionChannel::ECC_Visibility, ECR_Block);
-	if (OutHit.Actor== AEndActor)
-	{			
-		return true;
-	}
-	else
-	{
-		return false;
-	}
-
+	FCollisionQueryParams QueryParam;
+	GetWorld()->SweepSingleByChannel(OutHit, startActorLocation, endActorLocation, FQuat::Identity, ECollisionChannel::ECC_Pawn, StartNode->BoxComponent->GetCollisionShape(), QueryParam);
+	if (OutHit.Actor == AEndActor) 
+		return true;	
+	else 
+		return false;	
 }
+
 void  UAStarPathFindingComponent::Algorithm()
 {
 	AAStarNode* CurrentNode = nullptr;
-	ANodePriority.HeapPop(CurrentNode, SortingPredicate);
-
+	ANodePriority.HeapPop(CurrentNode, SORTING_PREDICATE_LAMBDA);
+	/*
 	if (IsEndInSight(CurrentNode))
 	{
 		EndNode->gCost = CurrentNode->gCost + CurrentNode->GetDistanceTo(EndNode);
 		EndNode->fCost = EndNode->gCost + EndNode->hCost;
-		ANodePriority.HeapPush(EndNode, SortingPredicate);
-		EndNode->ParentNode = CurrentNode;
-
-		
-		
+		ANodePriority.HeapPush(EndNode, SORTING_PREDICATE_LAMBDA);
+		EndNode->ParentNode = CurrentNode;			
 	}	
+	*/
 	for (int i = 0; i < CurrentNode->ArrayNeighbours.Num(); i++)
 	{
-		float Distance = CurrentNode->GetSquaredDistanceTo(CurrentNode->ArrayNeighbours[i]);
+		float Distance = CurrentNode->GetDistanceTo(CurrentNode->ArrayNeighbours[i]);
 
 		if ((CurrentNode->gCost + Distance) < CurrentNode->ArrayNeighbours[i]->gCost)
 		{
+			CurrentNode->ArrayNeighbours[i]->depth = CurrentNode->depth + 1;
 			CurrentNode->ArrayNeighbours[i]->ParentNode = CurrentNode;
 			CurrentNode->ArrayNeighbours[i]->gCost = CurrentNode->gCost + (Distance);
-			CurrentNode->ArrayNeighbours[i]->hCost = CurrentNode->ArrayNeighbours[i]->GetSquaredDistanceTo(EndNode);
-			CurrentNode->ArrayNeighbours[i]->fCost = CurrentNode->ArrayNeighbours[i]->gCost + CurrentNode->ArrayNeighbours[i]->hCost;
-
-			ANodePriority.HeapPush(CurrentNode->ArrayNeighbours[i], SortingPredicate);
-		}
-		
+			CurrentNode->ArrayNeighbours[i]->hCost = CurrentNode->ArrayNeighbours[i]->GetDistanceTo(EndNode);
+			//CurrentNode->ArrayNeighbours[i]->fCost = CurrentNode->ArrayNeighbours[i]->gCost + (CurrentNode->ArrayNeighbours[i]->hCost); //Admissable
+			CurrentNode->ArrayNeighbours[i]->fCost = CurrentNode->ArrayNeighbours[i]->gCost + (3*CurrentNode->ArrayNeighbours[i]->hCost); //A*/Static Weighting
+			ANodePriority.HeapPush(CurrentNode->ArrayNeighbours[i], SORTING_PREDICATE_LAMBDA);
+		}		
 	}
 }
-
 void  UAStarPathFindingComponent::SpawnNodes()
 {//SNPAWNS AND CHECKS NEIGHBOURS INTO LIST
 
@@ -191,25 +176,25 @@ void  UAStarPathFindingComponent::SpawnNodes()
 		FRotator rotator(0.0f);
 		FVector spawnLocation = SuccessorPositions.FVectorSuccessors[i];
 		SpawnedNode = world->SpawnActor<AAStarNode>(AAStarNode::StaticClass(), spawnLocation, rotator, SpawnParams);
-
+		
 		if (SpawnedNode != nullptr)
-		{
-			TArray<AActor*> OverlappingActors;
+		{			
+			TArray<AActor*> OverlappingActors;			
 			SpawnedNode->GetOverlappingActors(OverlappingActors, AAStarNode::StaticClass());
 			if (OverlappingActors.Num() == 0)
-			{
-				SpawnedNode->BoxComponent->SetBoxExtent(FStartNodeExtent);
+			{						
 				SpawnedNode->bNodeDrawExtent = bDrawBoxExtents;				
 				ANodePriority.HeapTop()->ArrayNeighbours.Add(SpawnedNode);							
 			}
 			else
 			{
 				for (int i = 0; i < OverlappingActors.Num(); i++)
-				{//maybe check for collision with area > some value
-
-					ANodePriority.HeapTop()->ArrayNeighbours.Add(StaticCast<AAStarNode*>(OverlappingActors[i]));
+				{
+					if(OverlappingActors[i]->GetClass() == AAStarNode::StaticClass())
+						ANodePriority.HeapTop()->ArrayNeighbours.AddUnique(StaticCast<AAStarNode*>(OverlappingActors[i]));					
 				}
-				SpawnedNode->Destroy();
+				
+				this->GetWorld()->DestroyActor(SpawnedNode);
 			}
 		}
 	}
