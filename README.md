@@ -9,6 +9,6 @@ There are a few issues with the implementation
 ![output result](AStarPathing.png)
 
 ## Usage (Windows)
-* Run the AstarAlgorithm project, opening UE4
+* Run the AStarAlgorithm.uproject, opening UE4
 * Select a pre-made level
 * Run the Level
