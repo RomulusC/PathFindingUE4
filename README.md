@@ -20,9 +20,17 @@ https://www-robotics.jpl.nasa.gov/publications/Joseph_Carsten/fdstar3d.pdf
 
 ![output result](A4_E=3.png)
 
+## Where admissability = 1
+
+![output result](B1_E=1.png)
+
+## Where admissability = 5
+
+![output result](B1_E=5.png)
+
 ## Where admissability = 3
 
-![output result](AStarPathing.png)
+![output result](C1_E=3.png)
 
 ## Usage (Windows)
 * Run the AStarAlgorithm.uproject, opening UE4
