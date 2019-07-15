@@ -3,6 +3,10 @@
 There are a few issues with the implementation
 * Using the unreal engine collision system to assign node's connected neighbouring nodes is inneficient.  
 * A conisderable amount of overlapping nodes are spawned because the collision/overlap system doesn't detect overlapping when nodes are exactly in the same position.  
+* The current implementation doesn't include runtime replanning, so obstructed nodes during running, an alternative path isnt produced.
+* An improvement to the pathfinding in 3D algorithm would be to use "3D Field D*" algorithm. (Joseph Carsten, D. F. A. S., 2006. 3D Field D*: Improved Path Planning and Replanning in Three Dimensions. Beijing, IEEE.)
+https://www-robotics.jpl.nasa.gov/publications/Joseph_Carsten/fdstar3d.pdf
+
 
 ## Where admissability = 1
 
