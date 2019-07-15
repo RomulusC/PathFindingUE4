@@ -18,9 +18,9 @@ There are a few issues with the implementation
 
 ## Where admissability = 3
 
-![output result](AStarPathing)
+![output result](AStarPathing.png)
 
 ## Usage (Windows)
-* Run the AstarAlgorithm project, opening UE4
+* Run the AStarAlgorithm.uproject, opening UE4
 * Select a pre-made level
 * Run the Level
