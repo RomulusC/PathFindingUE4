@@ -6,7 +6,7 @@ There are a few issues with the implementation
 
 ![output result](A1.png)
 
-![output result](AStarPathing)
+![output result](AStarPathing.png)
 
 ## Usage (Windows)
 * Run the AstarAlgorithm project, opening UE4
