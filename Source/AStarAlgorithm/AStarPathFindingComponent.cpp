@@ -79,7 +79,7 @@ void UAStarPathFindingComponent::TickComponent(float DeltaTime, ELevelTick TickT
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	
-		if (bPathfindingRequired&&ANodePriority.Num() != 0)
+		if (bPathfindingRequired&&ANodePriority.Num() != 0&&fin ==false)
 		{		
 			if (ANodePriority.HeapTop() != EndNode)
 			{
@@ -97,13 +97,14 @@ void UAStarPathFindingComponent::TickComponent(float DeltaTime, ELevelTick TickT
 			StartNode->bNodeDrawExtent = bDrawPathBoxExtents;
 			StartNode->ExtentsColor = FColor::Cyan;
 			bPathfindingRequired = false;	
+			
 			travelToNextNode = ANodePathList.Pop();
 			}			
 		}
 		
-		if (!bPathfindingRequired)
+		if (!bPathfindingRequired&&fin==false)
 		{
-			if (this->GetOwner()->GetDistanceTo(travelToNextNode) >= 0.01f )
+			if (this->GetOwner()->GetDistanceTo(travelToNextNode) >= 10.0f )
 			{
 				this->GetOwner()->SetActorLocation(this->GetOwner()->GetActorLocation() + moveVector);
 
@@ -111,11 +112,19 @@ void UAStarPathFindingComponent::TickComponent(float DeltaTime, ELevelTick TickT
 			else if (travelToNextNode != EndNode)
 			{
 				travelToNextNode = ANodePathList.Pop();
-				moveVector = .1f*(travelToNextNode->GetActorLocation() - this->GetOwner()->GetActorLocation());
+				FVector vec = travelToNextNode->GetActorLocation() - this->GetOwner()->GetActorLocation();				
+				moveVector = 10.0f * vec/ vec.Size();
 			}			
+			else
+			{
+				this->GetOwner()->SetActorLocation(EndNode->GetActorLocation());
+				fin = true;
+
+			}
+
 		}
 }
-
+/*
 bool UAStarPathFindingComponent::IsEndInSight(AAStarNode* _node)
 {
 	FHitResult OutHit;
@@ -128,7 +137,7 @@ bool UAStarPathFindingComponent::IsEndInSight(AAStarNode* _node)
 	else 
 		return false;	
 }
-
+*/
 void  UAStarPathFindingComponent::Algorithm()
 {
 	AAStarNode* CurrentNode = nullptr;

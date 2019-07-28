@@ -21,8 +21,8 @@ public:
 		bool bDrawBoxExtents;
 	UPROPERTY(EditAnywhere)
 		bool bDrawPathBoxExtents;
-	UPROPERTY(EditAnywhere)
-		bool bLineOfSightOptimisation;
+	//UPROPERTY(EditAnywhere)
+		//bool bLineOfSightOptimisation;
 
 	UPROPERTY(EditAnywhere)
 		FVector FStartNodeExtent = FVector(0.0f);
@@ -39,7 +39,7 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	
 private:	
-
+	bool fin = false;
 	//Predicate Lambda: Sorts Heap structure of Nodes by smallest fCost first
 	 const TFunction<bool(const AAStarNode& a, AAStarNode& b)> SORTING_PREDICATE_LAMBDA = [&](const AAStarNode& a, AAStarNode& b) {return a.fCost < b.fCost;};	//Predicate to keep Array of Nodes in priority queue heap format
 
