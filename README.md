@@ -1,6 +1,6 @@
 ## A* 3D Pathfinding Algorithm
 
-##EDIT: THis codebase is absolute pants, dont ever use this... :D
+## EDIT: This codebase is absolute garbage, dont ever use this... :D
 
 There are a few issues with the implementation
 * Using the Unreal Engine's collision system to assign node's connected neighbouring nodes is inneficient.  
