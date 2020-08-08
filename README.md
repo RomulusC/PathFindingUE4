@@ -1,5 +1,7 @@
 ## A* 3D Pathfinding Algorithm
 
+##EDIT: THis codebase is absolute pants, dont ever use this... :D
+
 There are a few issues with the implementation
 * Using the Unreal Engine's collision system to assign node's connected neighbouring nodes is inneficient.  
 * A conisderable amount of overlapping nodes are spawned because the collision/overlap system doesn't detect overlapping when nodes are exactly in the same position.  
